@@ -1,0 +1,67 @@
+# 一键编排：前端(nginx) + 后端(FastAPI) + MySQL + Ollama(本地 embedding)
+# 启动前：复制 server/.env.example 为 server/.env 并填写 DOUBAO_API_KEY 等密钥
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: enterprise_consult
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    # 首次启动后需进入容器拉取 embedding 模型：
+    #   docker compose exec ollama ollama pull <你的 embedding 模型名>
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    env_file:
+      - server/.env
+    environment:
+      # 容器内覆盖：DB/embedding 指向 compose 服务名；其余密钥仍走 .env
+      DATABASE_URL: mysql+pymysql://root:${MYSQL_ROOT_PASSWORD:-rootpassword}@mysql:3306/enterprise_consult?charset=utf8mb4
+      EMBEDDING_BASE_URL: http://ollama:11434/v1
+      GRAPH_CHECKPOINT_DB: /app/state/graph_state.db
+      APP_ENV: production
+      DEBUG: "false"
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_data
+      - server_state:/app/state
+      - server_logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "${CLIENT_PORT:-8080}:80"
+    depends_on:
+      - server
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  ollama_data:
+  uploads_data:
+  chroma_data:
+  server_state:
+  server_logs:

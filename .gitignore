@@ -1,0 +1,50 @@
+#  Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg.info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+#  密码与环境变量（禁止提交）
+.env
+.env.*
+!.env.example
+
+# 运行时数据
+server/uploads/
+server/chroma_data*/
+server/graph_state.db
+server/logs/
+
+#  前端
+client/node_modules/
+client/dist/
+client/.vite/
+dist/
+build/
+
+#  编辑器
+.idea/
+.vscode/
+.DS_store
+Thumbs.db
+
+#  临时文件
+*.log
+*.tmp
+
+ollamamodels/
+
+# SQLite 运行时数据
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+server/data/
+
+# TypeScript 构建缓存
+*.tsbuildinfo

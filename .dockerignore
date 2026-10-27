@@ -1,0 +1,14 @@
+**/.env
+**/node_modules
+**/__pycache__
+**/.venv
+**/dist
+**/uploads
+**/chroma_data*
+**/*.db
+**/logs
+**/.pytest_cache
+**/.mypy_cache
+.git
+.github
+memory

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+uploads/
+chroma_data/
+graph_state.db
+logs/
+.venv/
