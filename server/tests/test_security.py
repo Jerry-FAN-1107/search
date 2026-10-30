@@ -7,7 +7,7 @@ from app.core.security import (
     create_refresh_token,
     decode_refresh_token,
 )
-
+import pytest
 def test_verify_password_ok_and_wrong():
     password = "zheshiyigemima"
     hashed = hash_password(password)
@@ -34,28 +34,31 @@ def test_access_token_roundtrip():
     assert pyload["iat"] < pyload["exp"]
 
 
-
+def test_malformed_token_rejected():
+    really_token = create_access_token(subject=123456)
+    fake_token = really_token + "1"
+    with pytest.raises(jwt.DecodeError):
+        decode_access_token(fake_token)
 
 def test_tampered_token_rejected():
-    really_token = create_access_token(subject = 123456)
-    fake_token = really_token + "1"
-    assert really_token != fake_token
-    import pytest
-    with pytest.raises(jwt.PyJWTError):
+    really_token = create_access_token(subject=123456)
+    really_token_list = really_token.split(".")
+    payload = really_token_list[1]
+    fake_payload = payload[:1] + "X" + payload[2:] if payload[1:2] != "X" else payload[:1] + "Y" + payload[2:]
+    fake_token = ".".join([really_token_list[0], fake_payload, really_token_list[2]])
+
+    with pytest.raises(jwt.InvalidSignatureError):
         decode_access_token(fake_token)
 
 
-
-
 def test_refresh_token_type_is_checked():
-    access_token = create_access_token(subject = 123456)
-    import pytest
+    access_token = create_access_token(subject=123456)
     with pytest.raises(jwt.InvalidTokenError):
         decode_refresh_token(access_token)
-    refresh_token,_,_ = create_refresh_token(subject = 123456)
-    pyload = decode_refresh_token(refresh_token)
-    assert pyload["type"] == "refresh"
-    assert pyload["sub"] == "123456"
+    refresh_token, _, _ = create_refresh_token(subject=123456)
+    payload = decode_refresh_token(refresh_token)
+    assert payload["type"] == "refresh"
+    assert payload["sub"] == "123456"
 
 
 
