@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -15,6 +15,20 @@ jobs:
           python-version: "3.12"
       - name: 编译检查（语法）
         run: python -m compileall server/app
+
+  backend_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: 安装测试依赖
+        run: pip install pytest pyjwt bcrypt pydantic-settings python-dotenv
+      - name: 运行测试单元
+        working-directory: server
+        run: python -m pytest -q
 
   frontend:
     runs-on: ubuntu-latest
